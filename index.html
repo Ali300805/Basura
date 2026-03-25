@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>¿A quién le toca sacar la basura?</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+    }
+
+    .container {
+      text-align: center;
+      padding: 2rem;
+      max-width: 600px;
+      width: 100%;
+    }
+
+    .trash-icon {
+      font-size: 5rem;
+      margin-bottom: 1rem;
+      animation: bounce 1.5s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      color: #a8d8ea;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .week-label {
+      font-size: 0.95rem;
+      color: #7f8c8d;
+      margin-bottom: 2.5rem;
+    }
+
+    .current-card {
+      background: rgba(255, 255, 255, 0.08);
+      border: 2px solid #e74c3c;
+      border-radius: 20px;
+      padding: 2.5rem 2rem;
+      margin-bottom: 2.5rem;
+      backdrop-filter: blur(6px);
+    }
+
+    .current-card .label {
+      font-size: 0.9rem;
+      color: #e74c3c;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 0.5rem;
+    }
+
+    .current-card .name {
+      font-size: 3.5rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .schedule-title {
+      font-size: 1rem;
+      color: #a8d8ea;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 1rem;
+    }
+
+    .schedule {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .person-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1rem;
+      transition: background 0.3s;
+    }
+
+    .person-card.active {
+      background: rgba(231, 76, 60, 0.2);
+      border-color: #e74c3c;
+    }
+
+    .person-card .person-name {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .person-card .person-week {
+      font-size: 0.8rem;
+      color: #7f8c8d;
+    }
+
+    .footer {
+      margin-top: 2rem;
+      font-size: 0.8rem;
+      color: #4a4a6a;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="trash-icon">🗑️</div>
+    <h1>¿A quién le toca sacar la basura?</h1>
+    <p class="week-label" id="week-label"></p>
+
+    <div class="current-card">
+      <p class="label">Esta semana le toca a</p>
+      <p class="name" id="current-name"></p>
+    </div>
+
+    <p class="schedule-title">Rotación semanal</p>
+    <div class="schedule" id="schedule"></div>
+
+    <p class="footer">Se actualiza automáticamente cada semana.</p>
+  </div>
+
+  <script>
+    const people = ['Edu', 'Gianni', 'Ali', 'David'];
+
+    // Use ISO week number so everyone shares the same reference
+    function getISOWeek(date) {
+      const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+      const dayNum = d.getUTCDay() || 7;
+      d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+      const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+      return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    }
+
+    function getCurrentPerson() {
+      const today = new Date();
+      const week = getISOWeek(today);
+      return people[(week - 1) % people.length];
+    }
+
+    function getWeekForPerson(person) {
+      const today = new Date();
+      const currentWeek = getISOWeek(today);
+      const currentIndex = (currentWeek - 1) % people.length;
+      const personIndex = people.indexOf(person);
+      const weeksAhead = (personIndex - currentIndex + people.length) % people.length;
+      if (weeksAhead === 0) return 'Esta semana';
+      if (weeksAhead === 1) return 'La próxima semana';
+      return `En ${weeksAhead} semanas`;
+    }
+
+    function render() {
+      const today = new Date();
+      const week = getISOWeek(today);
+      const current = getCurrentPerson();
+
+      document.getElementById('week-label').textContent =
+        `Semana ${week} — ${today.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+
+      document.getElementById('current-name').textContent = current;
+
+      const scheduleEl = document.getElementById('schedule');
+      scheduleEl.innerHTML = '';
+      people.forEach(person => {
+        const card = document.createElement('div');
+        card.className = 'person-card' + (person === current ? ' active' : '');
+        card.innerHTML = `
+          <p class="person-name">${person}</p>
+          <p class="person-week">${getWeekForPerson(person)}</p>
+        `;
+        scheduleEl.appendChild(card);
+      });
+    }
+
+    render();
+  </script>
+</body>
+</html>

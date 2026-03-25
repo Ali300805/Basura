@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Turno de Basura</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 40px;
+            font-size: 2.5em;
+        }
+
+        .turno-actual {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .turno-actual p {
+            font-size: 1.2em;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .nombre-turno {
+            font-size: 3em;
+            font-weight: bold;
+        }
+
+        .personas {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 500px) {
+            .personas {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .persona-card {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .persona-card.completado {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+
+        .persona-card.completado .nombre {
+            color: #28a745;
+        }
+
+        .persona-card.completado .estatus {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .nombre {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .estatus {
+            font-size: 0.95em;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #764ba2;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .boton-aceptar {
+            background: #28a745;
+            margin-top: 20px;
+            padding: 15px;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+
+        .boton-aceptar:hover {
+            background: #218838;
+        }
+
+        .boton-reset {
+            background: #dc3545;
+            margin-top: 15px;
+            padding: 12px;
+        }
+
+        .boton-reset:hover {
+            background: #c82333;
+        }
+
+        .info {
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗑️ Turno de Basura</h1>
+
+        <div class="turno-actual">
+            <p>Le toca a:</p>
+            <div class="nombre-turno" id="nombreActual">-</div>
+        </div>
+
+        <div class="personas" id="personas"></div>
+
+        <button class="boton-aceptar" onclick="marcarCompletado()">✓ Ya saqué la basura</button>
+        <button class="boton-reset" onclick="reiniciar()">↻ Reiniciar turnos</button>
+
+        <div class="info">
+            <p>Presiona el botón cuando hayas sacado la basura para pasar al siguiente turno</p>
+        </div>
+    </div>
+
+    <script>
+        const personas = ['Edu', 'Gianni', 'David', 'Ali'];
+        const storageKey = 'turnoBasura';
+
+        function inicializar() {
+            let estado = localStorage.getItem(storageKey);
+            if (!estado) {
+                estado = JSON.stringify({
+                    turnoActual: 0,
+                    completados: Array(personas.length).fill(false)
+                });
+                localStorage.setItem(storageKey, estado);
+            }
+            renderizar();
+        }
+
+        function obtenerEstado() {
+            return JSON.parse(localStorage.getItem(storageKey));
+        }
+
+        function guardarEstado(estado) {
+            localStorage.setItem(storageKey, JSON.stringify(estado));
+        }
+
+        function renderizar() {
+            const estado = obtenerEstado();
+            
+            // Actualizar nombre actual
+            document.getElementById('nombreActual').textContent = personas[estado.turnoActual];
+
+            // Renderizar tarjetas
+            const personasDiv = document.getElementById('personas');
+            personasDiv.innerHTML = '';
+
+            personas.forEach((persona, index) => {
+                const card = document.createElement('div');
+                card.className = 'persona-card';
+                if (estado.completados[index]) {
+                    card.classList.add('completado');
+                }
+
+                const estatus = estado.completados[index] ? '✓ Completado' : 'Pendiente';
+                const esTurnoActual = index === estado.turnoActual;
+                const marca = esTurnoActual ? '👉 ' : '';
+
+                card.innerHTML = `
+                    <div class="nombre">${marca}${persona}</div>
+                    <div class="estatus">${estatus}</div>
+                `;
+
+                personasDiv.appendChild(card);
+            });
+        }
+
+        function marcarCompletado() {
+            const estado = obtenerEstado();
+            estado.completados[estado.turnoActual] = true;
+
+            // Buscar el siguiente turno que no esté completado
+            let siguienteTurno = (estado.turnoActual + 1) % personas.length;
+            let intentos = 0;
+
+            while (estado.completados[siguienteTurno] && intentos < personas.length) {
+                siguienteTurno = (siguienteTurno + 1) % personas.length;
+                intentos++;
+            }
+
+            if (intentos === personas.length) {
+                // Todos completaron, reiniciar
+                estado.completados = Array(personas.length).fill(false);
+                estado.turnoActual = 0;
+                alert('¡Todos sacaron la basura! Iniciando nueva ronda...');
+            } else {
+                estado.turnoActual = siguienteTurno;
+            }
+
+            guardarEstado(estado);
+            renderizar();
+        }
+
+        function reiniciar() {
+            if (confirm('¿Estás seguro de que deseas reiniciar todos los turnos?')) {
+                const estado = {
+                    turnoActual: 0,
+                    completados: Array(personas.length).fill(false)
+                };
+                guardarEstado(estado);
+                renderizar();
+            }
+        }
+
+        // Inicializar al cargar la página
+        window.addEventListener('load', inicializar);
+    </script>
+</body>
+</html>

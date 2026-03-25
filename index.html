@@ -114,6 +114,30 @@
       color: #7f8c8d;
     }
 
+    .done-btn {
+      display: block;
+      width: 100%;
+      padding: 1rem;
+      margin-bottom: 2.5rem;
+      background: linear-gradient(135deg, #27ae60, #2ecc71);
+      border: none;
+      border-radius: 14px;
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .done-btn:hover {
+      opacity: 0.9;
+    }
+
+    .done-btn:active {
+      transform: scale(0.97);
+    }
+
     .footer {
       margin-top: 2rem;
       font-size: 0.8rem;
@@ -132,6 +156,8 @@
       <p class="name" id="current-name"></p>
     </div>
 
+    <button class="done-btn" id="done-btn">🗑️ Ya saqué la basura</button>
+
     <p class="schedule-title">Rotación semanal</p>
     <div class="schedule" id="schedule"></div>
 
@@ -140,6 +166,7 @@
 
   <script>
     const people = ['Edu', 'Gianni', 'Ali', 'David'];
+    const STORAGE_KEY = 'basura_week_offset';
 
     // Use ISO week number so everyone shares the same reference
     function getISOWeek(date) {
@@ -150,16 +177,23 @@
       return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
     }
 
-    function getCurrentPerson() {
+    function getWeekOffset() {
+      return parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10);
+    }
+
+    function getCurrentIndex() {
       const today = new Date();
       const week = getISOWeek(today);
-      return people[(week - 1) % people.length];
+      const offset = getWeekOffset();
+      return ((week - 1 + offset) % people.length + people.length) % people.length;
+    }
+
+    function getCurrentPerson() {
+      return people[getCurrentIndex()];
     }
 
     function getWeekForPerson(person) {
-      const today = new Date();
-      const currentWeek = getISOWeek(today);
-      const currentIndex = (currentWeek - 1) % people.length;
+      const currentIndex = getCurrentIndex();
       const personIndex = people.indexOf(person);
       const weeksAhead = (personIndex - currentIndex + people.length) % people.length;
       if (weeksAhead === 0) return 'Esta semana';
@@ -189,6 +223,12 @@
         scheduleEl.appendChild(card);
       });
     }
+
+    document.getElementById('done-btn').addEventListener('click', function () {
+      const newOffset = getWeekOffset() + 1;
+      localStorage.setItem(STORAGE_KEY, newOffset);
+      render();
+    });
 
     render();
   </script>
